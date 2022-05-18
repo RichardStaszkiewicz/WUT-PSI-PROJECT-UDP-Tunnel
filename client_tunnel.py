@@ -11,11 +11,18 @@ import socket
 
 BUFSIZE = 512
 # python3 client.py 192.168.1.19 9990
+class PortNumberException(Exception):
+    pass
 
 class Host(object):
-    def __init__(self, IP, port) -> None:
+    def __init__(self, IP, port):
         self.IP = IP
         self.port = port
+        try:
+            if int(port) > 65535:
+                raise Exception()
+        except Exception:
+            raise PortNumberException("too big port")
 
 class Client(object):
     """
@@ -31,7 +38,7 @@ class Client(object):
     Used to recieve TCP communication and send UDP messages containing it
     via tunnel.
     """
-    def __init__(self, Thost : Host, Uhost : Host):
+    def __init__(self, Thost: Host, Uhost: Host) -> None:
         self.Thost = Thost
         self.sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         self.sock.connect((Thost.IP, Thost.port))
