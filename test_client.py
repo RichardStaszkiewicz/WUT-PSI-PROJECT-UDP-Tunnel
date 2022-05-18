@@ -7,7 +7,7 @@ class TestClient(object):
         assert 0 == 0
 
     def test_constructor_correct(self):
-        assert ct.Client(ct.Host("", 1), ct.Host("", 2))
+        assert ct.Client(ct.Host("", 1), ct.Host("", 2), ct.Host("", 3))
 
 
 class TestHost(object):

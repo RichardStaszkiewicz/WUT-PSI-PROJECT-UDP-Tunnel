@@ -48,21 +48,25 @@ class Client(object):
     :param Thost: User-Provided. TCP Host parameters to be provided by client.
     :type Thost: Host
 
-    :param Uhost: User-Provided. UDP Host parameters client forwards messages.
+    :param UServer: User-Provided. UDP Server parameters for sending purpouse.
+    :type UServer: Host
+
+    :param Uhost: User-Provided. UDP Host parameters of opened client socket.
     :type Uhost: Host
 
     Creates client side of TCP-Tunnel implemented during project.
     Used to recieve TCP communication and send UDP messages containing it
     via tunnel.
     """
-    def __init__(self, Thost: Host, Uhost: Host, Interactive=True) -> None:
+    def __init__(self, Thost: Host, Uhost: Host, UServer: Host, Interact=True):
         self.Thost = Thost
         self.Uhost = Uhost
-        self.interactive = True
+        self.UServer = UServer
+        self.interactive = Interact
 
     def initiate_connection(self):
         """
-        Method initiate_connection. Atributes: None.
+        Method initiate_connection. Arguments: None.
 
         Initiates a connection based on stored host informations.
         Creates a TCP socket listening based on Thost
@@ -75,6 +79,20 @@ class Client(object):
         self.UDPsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.UDPsock.bind((self.Uhost.IP, self.Uhost.port))
 
+    def accept_TCP(self):
+        pass
+
+    def send_UDP(self, message):
+        """
+        Method send_UDP. Arguments:
+
+        :param message: data to be send via UDP to UServer
+        :type message: readable buffer
+
+        Method handling sending a UDP datagrams with a given message.
+        """
+        self.UDPsock.sendto(message, (self.UServer.IP, self.UServer.port))
+
     def send_test_message(self):
         for i in range(0, 5):
             self.TCPsock.sendall(f"Message {i}".encode('utf-8'))
@@ -83,6 +101,7 @@ class Client(object):
 
     def __del__(self):
         self.TCPsock.close()
+        self.UDPsock.close()
 
 
 help(Client)
