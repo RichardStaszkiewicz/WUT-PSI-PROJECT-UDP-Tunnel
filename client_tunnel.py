@@ -11,10 +11,25 @@ import socket
 
 BUFSIZE = 512
 # python3 client.py 192.168.1.19 9990
+
 class PortNumberException(Exception):
+    """
+    Exception PortNumberException. Atributes None.
+    Thrown in case of port number being corrupt.
+    """
     pass
 
 class Host(object):
+    """
+    Class Host. Atributes:
+    :param IP: Host IP
+    :type IP: str
+
+    :param port: Host port in range of (0, 65535)
+    :type port: str
+
+    class stores information about the host.
+    """
     def __init__(self, IP, port):
         self.IP = IP
         self.port = port
