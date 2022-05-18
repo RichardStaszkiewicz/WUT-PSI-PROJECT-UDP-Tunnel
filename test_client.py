@@ -1,9 +1,14 @@
 from pytest import raises
 import client_tunnel as ct
 
+
 class TestClient(object):
     def test_sanity(self):
         assert 0 == 0
+
+    def test_constructor_correct(self):
+        assert ct.Client(ct.Host("", 1), ct.Host("", 2))
+
 
 class TestHost(object):
     def test_sanity(self):
@@ -19,4 +24,3 @@ class TestHost(object):
 
     def test_constractor_correct(self):
         assert ct.Host("some IP", "5000")
-
