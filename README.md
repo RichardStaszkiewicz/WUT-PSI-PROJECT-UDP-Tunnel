@@ -26,10 +26,12 @@ Config file is in .json format and specifies a host tunnel end.
 ## Structure
 |  Tag                 | Client Description    | Server Description     |
 |:--------------------:|:---------------------:|:----------------------:|
-|  Send to IP          | Tunel Server-End IP   | Web Server IP          |
-|  Send to Port        | Tunel Server-End Port | Web Server Port        |
-|  Response to IP      | _Not applicable_      | Tunel Client-End IP    |
-|  Response to Port    | _Not applicable_      | Tunel Client-End Port  |
+|  Host IP             | Host IP to bind sock  | Host IP to bind sock   |
+|  Send UDP to IP      | Tunel Server-End IP   | Tunel Client-End IP    |
+|  Send UDP to Port    | Tunel Server-End Port | Tunel Client-End Port  |
+|  Send TCP to IP      | _Not applicable_      | Web Server IP          |
+|  Send TCP to Port    | _Not applicable_      | Web Server Port        |
+|  UDP Client Port     | Client UDP Port No.   | Client UDP Port No.    |
 |  TCP Port            | Opened TCP Port No.   | Opened TCP Port No.    |
 |  TCP Buffer Size     | TCP Buffer Size       | TCP Buffer Size        |
 |  TCP Backlog         | Amount of backloged c.| _Not applicable_       |

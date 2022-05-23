@@ -1,0 +1,11 @@
+{
+    "Host IP": "127.0.0.1",
+    "Send UDP to IP": "127.0.0.1",
+    "Send UDP to Port": "7001",
+    "UDP Client Port": "7000",
+    "Send TCP to IP": "194.29.168.3",
+    "Send TCP to Port": "80",
+    "TCP Port": "5000",
+    "TCP Is Listen": 1,
+    "TCP Buffer Size": "512"
+}

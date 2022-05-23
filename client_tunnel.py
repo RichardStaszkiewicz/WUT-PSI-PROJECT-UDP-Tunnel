@@ -12,6 +12,7 @@ import sys
 import logging
 import queue
 import threading
+import time
 
 # CONFIG:
 # |  Tag                 | Client Description    | Server Description     |
@@ -28,6 +29,7 @@ import threading
 #  GROUND TRUTHS ###########
 logging.basicConfig(level=logging.DEBUG,
                     format='(%(threadName)-9s) %(message)s',)
+END_PROGRAM = False
 # TCP_SEND = None     # A Queue of messages to be send via TCP socket
 # UDP_SEND = None     # A Queue of messages to be send via UDP socket
 # CONFIG = None       # A Dict of configurations specific to the run
@@ -80,6 +82,8 @@ def env_setup():
     try:
         global TCP_SEND
         TCP_SEND = queue.Queue(int(CONFIG["TCP Buffer Size"]))
+        global UDP_SEND
+        UDP_SEND = queue.Queue(int(CONFIG["TCP Buffer Size"]))
     except Exception:
         raise EnvironmentError
 
@@ -92,8 +96,26 @@ class SendingSocketUDP(threading.Thread):
         self.name = name
 
     def run(self):
-        logging.debug(f"Initiating UDP sending Socket...")
-        pass
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        host_ip = CONFIG["Host IP"]
+        port = int(CONFIG["UDP Client Port"])
+        info = f"Opening Socket on {host_ip}:{port}"
+        logging.debug(info)
+
+        self.socket.bind((host_ip, port))
+
+        stamp = (CONFIG["Send UDP to IP"], CONFIG["Send UDP to Port"])
+        info = f"Socket sending to {stamp[0]}:{stamp[1]}"
+        logging.debug(info)
+
+        while(not END_PROGRAM):
+            if not UDP_SEND.empty():
+                item = UDP_SEND.get()
+                self.socket.sendto(item, stamp)
+            else:
+                time.sleep(1)
+        self.socket.close()
+        return
 
 
 class RecievingSocketUDP(threading.Thread):
@@ -133,13 +155,14 @@ if __name__ == "__main__":
 
     except ZeroDivisionError:
         print("Invalid amount of args. Did you enclose configuration file?")
-        sys.exit(1)
     except ConfigFileInvalid:
         print(f"Configuration file {sys.argv[1]} format corrupt!")
-        exit(1)
     except EnvironmentError:
         print(f"Unsupported by environment operation.")
         print(f"Have you set up the environment approprietly?")
-        exit(1)
+    except Exception:
+        print("Unexpected error occured...")
 
-    print(CONFIG)
+    # print(CONFIG)
+
+    END_PROGRAM = True
