@@ -3,8 +3,10 @@
     "Send UDP to IP": "127.0.0.1",
     "Send UDP to Port": "6001",
     "UDP Client Port": "6000",
+    "UDP Server Port": "7001",
     "TCP Port": "5000",
     "TCP Is Listen": 1,
     "TCP Buffer Size": 512,
+    "UDP Buffer Size": 1024,
     "TCP Backlog": 6
 }

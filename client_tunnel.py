@@ -126,8 +126,22 @@ class RecievingSocketUDP(threading.Thread):
         self.name = name
 
     def run(self):
-        logging.debug(f"Initiating UDP recieving Socket...")
-        pass
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        host_ip = CONFIG["Host IP"]
+        port = int(CONFIG["UDP Server Port"])
+        info = f"Opening Socket on {host_ip}:{port}"
+        logging.debug(info)
+
+        self.socket.bind((host_ip, port))
+        buf = int(CONFIG["UDP Buffer Size"])
+
+        while(not END_PROGRAM):
+            data, address = self.socket.recvfrom(buf)
+            if data:
+                TCP_SEND.put(data)
+
+        self.socket.close()
+        return
 
 
 class SocketTCP(threading.Thread):

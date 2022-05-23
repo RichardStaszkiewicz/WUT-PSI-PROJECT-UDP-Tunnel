@@ -32,7 +32,9 @@ Config file is in .json format and specifies a host tunnel end.
 |  Send TCP to IP      | _Not applicable_      | Web Server IP          |
 |  Send TCP to Port    | _Not applicable_      | Web Server Port        |
 |  UDP Client Port     | Client UDP Port No.   | Client UDP Port No.    |
+|  UDP Server Port     | Server UDP Port No.   | _Not applicable_       |
 |  TCP Port            | Opened TCP Port No.   | Opened TCP Port No.    |
 |  TCP Buffer Size     | TCP Buffer Size       | TCP Buffer Size        |
+|  UDP Buffer Size     | UDP Buffer Size       | UDP Buffer Size        |
 |  TCP Backlog         | Amount of backloged c.| _Not applicable_       |
 |  TCP is listen       | **CONST 1**           | **CONST 0**            |
