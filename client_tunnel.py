@@ -8,10 +8,10 @@ all rights reserved
 
 import socket
 import json
-
-
-BUFSIZE = 512
-# python3 client.py 192.168.1.19 9990
+import sys
+import logging
+import queue
+import threading
 
 # CONFIG:
 # |  Tag                 | Client Description    | Server Description     |
@@ -24,6 +24,16 @@ BUFSIZE = 512
 # |  TCP Buffer Size     | TCP Buffer Size       | TCP Buffer Size        |
 # |  TCP Backlog         | Amount of backloged c.| _Not applicable_       |
 # |  TCP is listen       | **CONST 1**           | **CONST 0**            |
+
+#  GROUND TRUTHS ###########
+logging.basicConfig(level=logging.DEBUG,
+                    format='(%(threadName)-9s) %(message)s',)
+# TCP_SEND = None     # A Queue of messages to be send via TCP socket
+# UDP_SEND = None     # A Queue of messages to be send via UDP socket
+# CONFIG = None       # A Dict of configurations specific to the run
+
+
+BUFSIZE = 512
 
 
 class PortNumberException(Exception):
@@ -42,87 +52,94 @@ class ConfigFileInvalid(Exception):
     pass
 
 
-class Host(object):
+class EnvironmentError(Exception):
     """
-    Class Host. Atributes:
-    :param IP: Host IP
-    :type IP: str
-
-    :param port: Host port in range of (0, 65535)
-    :type port: str
-
-    class stores information about the host.
+    Exception EnvironmentError. No atributes.
+    Raises when user has environment not compatible with the program.
     """
-    def __init__(self, IP, port):
-        self.IP = IP
-        self.port = port
-        try:
-            if int(port) > 65535:
-                raise Exception()
-        except Exception:
-            raise PortNumberException("too big port")
+    pass
 
 
-class Tunnel(object):
+def env_setup():
     """
-    Class Tunnel. Atributes:
+    Function env_setup. No Arguments.
+    :return: configuration as dict
 
-    :param config_file: path to configuration file
-    :type config_file: str
-
-    :param Interact: interactive logs prompt on terminal
-    :type Interact: bool
-
-    Creates tunnel host implemented by project. Specification of
-    server or client end is up to config file.
+    Verifies the configuration legitimacy, sets up working environment.
     """
-    def __init__(self, config_file: str, Interact=True):
-        try:
-            with open(config_file, "r+") as handle:
-                self.config = json.load(handle)
-        except Exception:
-            raise ConfigFileInvalid("Configuration file format corrupt!")
-        self.interactive = Interact
+    if len(sys.argv) != 2:
+        raise ZeroDivisionError
 
-    def setup_connections(self):
-        """
-        Method setup_connections. Arguments: None.
+    try:
+        with open(sys.argv[1], "r+") as handle:
+            global CONFIG
+            CONFIG = json.load(handle)
+    except Exception:
+        raise ConfigFileInvalid
 
-        Initiates a connection based on stored host informations.
-        Creates a TCP socket. Depending on config, it might be client or server
-        Creates a UDP client and server socket based on Config.
-        """
-        self.TCPsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.TCPsock.bind((self.Thost.IP, self.Thost.port))
-        self.TCPsock.listen(6)
+    try:
+        global TCP_SEND
+        TCP_SEND = queue.Queue(int(CONFIG["TCP Buffer Size"]))
+    except Exception:
+        raise EnvironmentError
 
-        self.UDPsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.UDPsock.bind((self.Uhost.IP, self.Uhost.port))
 
-    def accept_TCP(self):
+class SendingSocketUDP(threading.Thread):
+    def __init__(self, group=None, target=None, name=None, args=(),
+                 kwargs=None, verbose=None) -> None:
+        super(SendingSocketUDP, self).__init__()
+        self.target = target
+        self.name = name
+
+    def run(self):
+        logging.debug(f"Initiating UDP sending Socket...")
         pass
 
-    def send_UDP(self, message):
-        """
-        Method send_UDP. Arguments:
 
-        :param message: data to be send via UDP to UServer
-        :type message: readable buffer
+class RecievingSocketUDP(threading.Thread):
+    def __init__(self, group=None, target=None, name=None, args=(),
+                 kwargs=None, verbose=None) -> None:
+        super(RecievingSocketUDP, self).__init__()
+        self.target = target
+        self.name = name
 
-        Method handling sending a UDP datagrams with a given message.
-        """
-        self.UDPsock.sendto(message, (self.UServer.IP, self.UServer.port))
-
-    def send_test_message(self):
-        for i in range(0, 5):
-            self.TCPsock.sendall(f"Message {i}".encode('utf-8'))
-            response = self.TCPsock.recv(BUFSIZE)
-            print(str(response.decode('utf-8')))
-
-    def __del__(self):
-        self.TCPsock.close()
-        self.UDPsock.close()
+    def run(self):
+        logging.debug(f"Initiating UDP recieving Socket...")
+        pass
 
 
-help(Tunnel)
-# c = client(sys.argv[1],int(sys.argv[2]))
+class SocketTCP(threading.Thread):
+    def __init__(self, group=None, target=None, name=None, args=(),
+                 kwargs=None, verbose=None) -> None:
+        super(SocketTCP, self).__init__()
+        self.target = target
+        self.name = name
+
+    def run(self):
+        logging.debug(f"Initiating TCP Socket...")
+        pass
+
+
+if __name__ == "__main__":
+    try:
+        env_setup()
+        UDP_Send = SendingSocketUDP(name='Sending UDP Socket')
+        UDP_Recieve = RecievingSocketUDP(name='Recieving UDP Socket')
+        TCP_Socket = SocketTCP(name='TCP Connection Socket')
+
+        UDP_Send.start()
+        UDP_Recieve.start()
+        TCP_Socket.start()
+
+    except ZeroDivisionError:
+        print("Invalid amount of args. Did you enclose configuration file?")
+        sys.exit(1)
+    except ConfigFileInvalid:
+        print(f"Configuration file {sys.argv[1]} format corrupt!")
+        exit(1)
+    except EnvironmentError:
+        print(f"Unsupported by environment operation.")
+        print(f"Have you set up the environment approprietly?")
+        exit(1)
+
+    print(CONFIG)

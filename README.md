@@ -19,6 +19,11 @@ Datagram:
 3, 4 -> Server
 
 # Config file
+
+## TL;DR
+Config file is in .json format and specifies a host tunnel end.
+
+## Structure
 |  Tag                 | Client Description    | Server Description     |
 |:--------------------:|:---------------------:|:----------------------:|
 |  Send to IP          | Tunel Server-End IP   | Web Server IP          |
