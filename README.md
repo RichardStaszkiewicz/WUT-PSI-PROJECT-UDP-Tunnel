@@ -17,3 +17,15 @@ Datagram:
 
 1, 2 -> Client
 3, 4 -> Server
+
+# Config file
+|  Tag                 | Client Description    | Server Description     |
+|:--------------------:|:---------------------:|:----------------------:|
+|  Send to IP          | Tunel Server-End IP   | Web Server IP          |
+|  Send to Port        | Tunel Server-End Port | Web Server Port        |
+|  Response to IP      | _Not applicable_      | Tunel Client-End IP    |
+|  Response to Port    | _Not applicable_      | Tunel Client-End Port  |
+|  TCP Port            | Opened TCP Port No.   | Opened TCP Port No.    |
+|  TCP Buffer Size     | TCP Buffer Size       | TCP Buffer Size        |
+|  TCP Backlog         | Amount of backloged c.| _Not applicable_       |
+|  TCP is listen       | **CONST 1**           | **CONST 0**            |

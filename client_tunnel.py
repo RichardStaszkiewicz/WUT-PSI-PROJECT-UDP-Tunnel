@@ -2,20 +2,42 @@
 Project Tag: UTunnel
 Project Full Name: Tunnel UDP
 Author: Richard Staszkiewicz, Katarzyna Glaza, Krystian Kamiński, Michał Bielak
-Last modified: 6.12.2020
+Last modified: 23.05.2022
 all rights reserved
 """
 
 import socket
+import json
+
 
 BUFSIZE = 512
 # python3 client.py 192.168.1.19 9990
+
+# CONFIG:
+# |  Tag                 | Client Description    | Server Description     |
+# |:--------------------:|:---------------------:|:----------------------:|
+# |  Send to IP          | Tunel Server-End IP   | Web Server IP          |
+# |  Send to Port        | Tunel Server-End Port | Web Server Port        |
+# |  Response to IP      | _Not applicable_      | Tunel Client-End IP    |
+# |  Response to Port    | _Not applicable_      | Tunel Client-End Port  |
+# |  TCP Port            | Opened TCP Port No.   | Opened TCP Port No.    |
+# |  TCP Buffer Size     | TCP Buffer Size       | TCP Buffer Size        |
+# |  TCP Backlog         | Amount of backloged c.| _Not applicable_       |
+# |  TCP is listen       | **CONST 1**           | **CONST 0**            |
 
 
 class PortNumberException(Exception):
     """
     Exception PortNumberException. Atributes None.
     Thrown in case of port number being corrupt.
+    """
+    pass
+
+
+class ConfigFileInvalid(Exception):
+    """
+    Exception ConfigFileInvalid. Atributes None.
+    Thrown in case of problems according to configuration file.
     """
     pass
 
@@ -41,36 +63,34 @@ class Host(object):
             raise PortNumberException("too big port")
 
 
-class Client(object):
+class Tunnel(object):
     """
-    Class client. Atributes:
+    Class Tunnel. Atributes:
 
-    :param Thost: User-Provided. TCP Host parameters to be provided by client.
-    :type Thost: Host
+    :param config_file: path to configuration file
+    :type config_file: str
 
-    :param UServer: User-Provided. UDP Server parameters for sending purpouse.
-    :type UServer: Host
+    :param Interact: interactive logs prompt on terminal
+    :type Interact: bool
 
-    :param Uhost: User-Provided. UDP Host parameters of opened client socket.
-    :type Uhost: Host
-
-    Creates client side of TCP-Tunnel implemented during project.
-    Used to recieve TCP communication and send UDP messages containing it
-    via tunnel.
+    Creates tunnel host implemented by project. Specification of
+    server or client end is up to config file.
     """
-    def __init__(self, Thost: Host, Uhost: Host, UServer: Host, Interact=True):
-        self.Thost = Thost
-        self.Uhost = Uhost
-        self.UServer = UServer
+    def __init__(self, config_file: str, Interact=True):
+        try:
+            with open(config_file, "r+") as handle:
+                self.config = json.load(handle)
+        except Exception:
+            raise ConfigFileInvalid("Configuration file format corrupt!")
         self.interactive = Interact
 
-    def initiate_connection(self):
+    def setup_connections(self):
         """
-        Method initiate_connection. Arguments: None.
+        Method setup_connections. Arguments: None.
 
         Initiates a connection based on stored host informations.
-        Creates a TCP socket listening based on Thost
-        Creates a UDP socket for sending datagrams to Uhost
+        Creates a TCP socket. Depending on config, it might be client or server
+        Creates a UDP client and server socket based on Config.
         """
         self.TCPsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.TCPsock.bind((self.Thost.IP, self.Thost.port))
@@ -104,5 +124,5 @@ class Client(object):
         self.UDPsock.close()
 
 
-help(Client)
+help(Tunnel)
 # c = client(sys.argv[1],int(sys.argv[2]))
