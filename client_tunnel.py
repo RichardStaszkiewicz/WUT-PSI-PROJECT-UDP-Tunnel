@@ -90,10 +90,15 @@ class SendingSocketUDP(threading.Thread):
             logging.debug(f"Socket sending to {stamp[0]}:{stamp[1]}")
 
             while not END_PROGRAM:
-                if not UDP_SEND.empty():
-                    item = UDP_SEND.get()
-                    logging.debug(f"Taken from UDP queue {len(item)}B")
-                    self.socket.sendto(item, stamp)
+                if not UDP_SEND.qsize() == 0:
+                    try:
+                        item = UDP_SEND.get(timeout=1)
+                        if item is not None:
+                            UDP_SEND.task_done()
+                            logging.debug(f"Taken from UDP queue {len(item)}B")
+                            self.socket.sendto(item, stamp)
+                    except Exception:
+                        pass
                 else:
                     time.sleep(1)
 
@@ -179,18 +184,8 @@ class SocketTCP(threading.Thread):
                 with connection:
                     ad = f"{addr[0]}:{addr[1]}"
                     logging.debug(f"Connection accepted from {ad}")
-                    while not END_PROGRAM:
-                        try:
-                            message = connection.recv(self.bufsize)
-                            if not message:
-                                break
-                            UDP_SEND.put(message)
-                            logging.debug(f"Put to UDP queue {len(message)}B")
-                        except socket.timeout:
-                            if not TCP_SEND.empty():
-                                item = TCP_SEND.get()
-                                logging.debug(f"Send via TCP {len(item)}B")
-                                self.socket.sendall(item)
+                    connection.settimeout(1)
+                    self.TCP_main_loop(connection)
                     logging.debug(f"Connection closed by client")
             except socket.timeout:
                 pass
@@ -202,21 +197,29 @@ class SocketTCP(threading.Thread):
         server_port = int(CONFIG["Send TCP to Port"])
         logging.debug(f"Connecting Socket to {server_ip}:{server_port}")
         self.socket.connect((server_ip, server_port))
+        self.TCP_main_loop(self.socket)
+        return
+
+    def TCP_main_loop(self, sock):
         while not END_PROGRAM:
-            if not TCP_SEND.empty():
-                item = TCP_SEND.get()
-                logging.debug(f"Send via TCP {len(item)}B")
-                self.socket.sendall(item)
+            if not TCP_SEND.qsize() == 0:
+                item = TCP_SEND.get(timeout=1)
+                if len(item) != 0:
+                    TCP_SEND.task_done()
+                    logging.debug(f"Send via TCP {len(item)}B")
+                    sock.sendall(item)
             else:
                 try:
-                    message = self.socket.recv(self.bufsize)
-                    logging.debug(f"Put to UDP queue {len(message)}B")
-                    UDP_SEND.put(message)
+                    message = sock.recv(self.bufsize)
+                    if len(message) > 0:
+                        logging.debug(f"Put to UDP queue {len(message)}B")
+                        UDP_SEND.put(message)
+                    else:
+                        # print("Message discarded...") # Some wierd behaviour
+                        pass
                 except socket.timeout:
                     pass
-                # self.socket.sendall("ping".encode('utf-8'))
                 time.sleep(1)
-        return
 
 
 if __name__ == "__main__":
