@@ -150,6 +150,7 @@ class SocketTCP(threading.Thread):
     def run(self):
         try:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.socket.settimeout(1)
             self.bufsize = CONFIG["TCP Buffer Size"]
             host_ip = CONFIG["Host IP"]
             port = int(CONFIG["TCP Port"])
@@ -168,7 +169,6 @@ class SocketTCP(threading.Thread):
         self.socket.close()
 
     def server_mode(self):
-        self.socket.settimeout(5)
         backlog = int(CONFIG["TCP Backlog"])
         self.socket.listen(backlog)
         logging.debug(f"Socket Listening with {backlog} backlog")
@@ -182,12 +182,15 @@ class SocketTCP(threading.Thread):
                     while not END_PROGRAM:
                         try:
                             message = connection.recv(self.bufsize)
+                            if not message:
+                                break
+                            UDP_SEND.put(message)
+                            logging.debug(f"Put to UDP queue {len(message)}B")
                         except socket.timeout:
-                            pass
-                        if not message:
-                            break
-                        UDP_SEND.put(message)
-                        logging.debug(f"Put to UDP queue {len(message)}B")
+                            if not TCP_SEND.empty():
+                                item = TCP_SEND.get()
+                                logging.debug(f"Send via TCP {len(item)}B")
+                                self.socket.sendall(item)
                     logging.debug(f"Connection closed by client")
             except socket.timeout:
                 pass
@@ -211,7 +214,7 @@ class SocketTCP(threading.Thread):
                     UDP_SEND.put(message)
                 except socket.timeout:
                     pass
-                self.socket.sendall("ping".encode('utf-8'))
+                # self.socket.sendall("ping".encode('utf-8'))
                 time.sleep(1)
         return
 
