@@ -63,9 +63,9 @@ def env_setup():
 
     try:
         global TCP_SEND
-        TCP_SEND = queue.Queue(int(CONFIG["TCP Buffer Size"]))
+        TCP_SEND = queue.Queue(int(CONFIG["TCP Buffer Count"]))
         global UDP_SEND
-        UDP_SEND = queue.Queue(int(CONFIG["UDP Buffer Size"]))
+        UDP_SEND = queue.Queue(int(CONFIG["UDP Buffer Count"]))
     except Exception:
         raise EnvironmentError
 
@@ -156,7 +156,7 @@ class SocketTCP(threading.Thread):
         try:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.socket.settimeout(1)
-            self.bufsize = CONFIG["TCP Buffer Size"]
+            self.bufsize = CONFIG["TCP Read Buffer"]
             host_ip = CONFIG["Host IP"]
             port = int(CONFIG["TCP Port"])
             info = f"Opening Socket on {host_ip}:{port}"

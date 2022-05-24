@@ -8,7 +8,8 @@
     "Send TCP to Port": 80,
     "TCP Port": 5001,
     "TCP Is Listen": 0,
-    "TCP Buffer Size": 512,
-    "UDP Buffer Size": 1024,
-    "UDP Read Buffer": 60000
+    "TCP Buffer Count": 512,
+    "UDP Buffer Count": 1024,
+    "UDP Read Buffer": 60000,
+    "TCP Read Buffer": 60000
 }
