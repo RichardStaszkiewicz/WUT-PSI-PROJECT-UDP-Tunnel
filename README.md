@@ -24,17 +24,18 @@ Datagram:
 Config file is in .json format and specifies a host tunnel end.
 
 ## Structure
-|  Tag                 | Client Description    | Server Description     |
-|:--------------------:|:---------------------:|:----------------------:|
-|  Host IP             | Host IP to bind sock  | Host IP to bind sock   |
-|  Send UDP to IP      | Tunel Server-End IP   | Tunel Client-End IP    |
-|  Send UDP to Port    | Tunel Server-End Port | Tunel Client-End Port  |
-|  Send TCP to IP      | _Not applicable_      | Web Server IP          |
-|  Send TCP to Port    | _Not applicable_      | Web Server Port        |
-|  UDP Client Port     | Client UDP Port No.   | Client UDP Port No.    |
-|  UDP Server Port     | Server UDP Port No.   | _Not applicable_       |
-|  TCP Port            | Opened TCP Port No.   | Opened TCP Port No.    |
-|  TCP Buffer Size     | TCP Buffer Size       | TCP Buffer Size        |
-|  UDP Buffer Size     | UDP Buffer Size       | UDP Buffer Size        |
-|  TCP Backlog         | Amount of backloged c.| _Not applicable_       |
-|  TCP is listen       | **CONST 1**           | **CONST 0**            |
+|  Tag                 | Client Description    | Server Description     |  Important for
+|:--------------------:|:---------------------:|:----------------------:|:--------------------:
+|  **Host IP**             | Host IP to bind sock  | Host IP to bind sock   | UDP Sockets creation
+|  **Send UDP to IP**      | Tunel Server-End IP   | Tunel Client-End IP    | Sending UDP Socket
+|  **Send UDP to Port**    | Tunel Server-End Port | Tunel Client-End Port  | Sending UDP Socket
+|  Send TCP to IP      | _Not applicable_      | Web Server IP          | Client-mode TCP Socket
+|  Send TCP to Port    | _Not applicable_      | Web Server Port        | Client-mode TCP Socket
+|  UDP Client Port     | Client UDP Port No.   | Client UDP Port No.    | UDP Client Socket creation
+|  UDP Server Port     | Server UDP Port No.   | Server UDP Port No.    | UDP Server Socket creation
+|  TCP Port            | Opened TCP Port No.   | Opened TCP Port No.    | TCP Socket creation
+|  TCP Buffer Count     | TCP Message count Buffer    | TCP Message Buffer     | TCP Message Queue
+|  UDP Buffer Count     | UDP Message count Buffer    | UDP Message Buffer     | UDP Message Queue
+|  UDP Read Buffer     | UDP Message buffer size | UDP Message buffer size | UDP Server Socket read
+|  TCP Backlog         | Amount of backloged c.| _Not applicable_       | Server-mode TCP Socket
+|  TCP is listen       | **CONST 1**           | **CONST 0**            | TCP Socket moding

@@ -14,28 +14,10 @@ import queue
 import threading
 import time
 
-# CONFIG:
-# |  Tag                 | Client Description    | Server Description     |
-# |:--------------------:|:---------------------:|:----------------------:|
-# |  Send to IP          | Tunel Server-End IP   | Web Server IP          |
-# |  Send to Port        | Tunel Server-End Port | Web Server Port        |
-# |  Response to IP      | _Not applicable_      | Tunel Client-End IP    |
-# |  Response to Port    | _Not applicable_      | Tunel Client-End Port  |
-# |  TCP Port            | Opened TCP Port No.   | Opened TCP Port No.    |
-# |  TCP Buffer Size     | TCP Buffer Size       | TCP Buffer Size        |
-# |  TCP Backlog         | Amount of backloged c.| _Not applicable_       |
-# |  TCP is listen       | **CONST 1**           | **CONST 0**            |
-
 #  GROUND TRUTHS ###########
 logging.basicConfig(level=logging.DEBUG,
                     format='(%(threadName)-9s) %(message)s',)
 END_PROGRAM = False
-# TCP_SEND = None     # A Queue of messages to be send via TCP socket
-# UDP_SEND = None     # A Queue of messages to be send via UDP socket
-# CONFIG = None       # A Dict of configurations specific to the run
-
-
-BUFSIZE = 512
 
 
 class PortNumberException(Exception):
@@ -83,7 +65,7 @@ def env_setup():
         global TCP_SEND
         TCP_SEND = queue.Queue(int(CONFIG["TCP Buffer Size"]))
         global UDP_SEND
-        UDP_SEND = queue.Queue(int(CONFIG["TCP Buffer Size"]))
+        UDP_SEND = queue.Queue(int(CONFIG["UDP Buffer Size"]))
     except Exception:
         raise EnvironmentError
 
@@ -97,24 +79,26 @@ class SendingSocketUDP(threading.Thread):
 
     def run(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        host_ip = CONFIG["Host IP"]
-        port = int(CONFIG["UDP Client Port"])
-        info = f"Opening Socket on {host_ip}:{port}"
-        logging.debug(info)
+        try:
+            host_ip = CONFIG["Host IP"]
+            port = int(CONFIG["UDP Client Port"])
+            logging.debug(f"Opening Socket on {host_ip}:{port}")
 
-        self.socket.bind((host_ip, port))
+            self.socket.bind((host_ip, port))
 
-        stamp = (CONFIG["Send UDP to IP"], CONFIG["Send UDP to Port"])
-        info = f"Socket sending to {stamp[0]}:{stamp[1]}"
-        logging.debug(info)
+            stamp = (CONFIG["Send UDP to IP"], int(CONFIG["Send UDP to Port"]))
+            logging.debug(f"Socket sending to {stamp[0]}:{stamp[1]}")
 
-        while not END_PROGRAM:
-            if not UDP_SEND.empty():
-                item = UDP_SEND.get()
-                self.socket.sendto(item, stamp)
-            else:
-                time.sleep(1)
+            while not END_PROGRAM:
+                if not UDP_SEND.empty():
+                    item = UDP_SEND.get()
+                    logging.debug(f"Taken from UDP queue {len(item)}B")
+                    self.socket.sendto(item, stamp)
+                else:
+                    time.sleep(1)
 
+        except Exception:
+            pass
         logging.debug(f"Closing Socket...")
         self.socket.close()
         return
@@ -128,25 +112,28 @@ class RecievingSocketUDP(threading.Thread):
         self.name = name
 
     def run(self):
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.socket.settimeout(0.5)
+        try:
+            self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self.socket.settimeout(0.5)
 
-        host_ip = CONFIG["Host IP"]
-        port = int(CONFIG["UDP Server Port"])
-        info = f"Opening Socket on {host_ip}:{port}"
-        logging.debug(info)
+            host_ip = CONFIG["Host IP"]
+            port = int(CONFIG["UDP Server Port"])
+            logging.debug(f"Opening Socket on {host_ip}:{port}")
 
-        self.socket.bind((host_ip, port))
-        buf = int(CONFIG["UDP Buffer Size"])
+            self.socket.bind((host_ip, port))
+            buf = int(CONFIG["UDP Read Buffer"])
 
-        while not END_PROGRAM:
-            try:
-                data, address = self.socket.recvfrom(buf)
-            except socket.timeout:
-                data = None
-            if data:
-                logging.debug(f"Recieved {len(data)}B from {address}")
-                TCP_SEND.put(data)
+            while not END_PROGRAM:
+                try:
+                    data, address = self.socket.recvfrom(buf)
+                except socket.timeout:
+                    data = None
+                if data:
+                    ad = f"{address[0]}:{address[1]}"
+                    logging.debug(f"Recieved {len(data)}B from {ad}")
+                    TCP_SEND.put(data)
+        except Exception:
+            pass
 
         logging.debug(f"Closing Socket...")
         self.socket.close()
@@ -161,41 +148,50 @@ class SocketTCP(threading.Thread):
         self.name = name
 
     def run(self):
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.settimeout(5)
-        self.bufsize = CONFIG["TCP Buffer Size"]
-        host_ip = CONFIG["Host IP"]
-        port = int(CONFIG["TCP Port"])
-        info = f"Opening Socket on {host_ip}:{port}"
-        logging.debug(info)
+        try:
+            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.bufsize = CONFIG["TCP Buffer Size"]
+            host_ip = CONFIG["Host IP"]
+            port = int(CONFIG["TCP Port"])
+            info = f"Opening Socket on {host_ip}:{port}"
+            logging.debug(info)
 
-        isClient = int(CONFIG["TCP Is Listen"])
-        if isClient == 1:
-            self.socket.bind((host_ip, port))
-            self.server_mode()
-        else:
-            self.clinet_mode()
-
+            isClient = int(CONFIG["TCP Is Listen"])
+            if isClient == 1:
+                self.socket.bind((host_ip, port))
+                self.server_mode()
+            else:
+                self.clinet_mode()
+        except Exception as e:
+            logging.exception(e)
+        logging.debug(f"Closing Socket...")
         self.socket.close()
 
     def server_mode(self):
+        self.socket.settimeout(5)
         backlog = int(CONFIG["TCP Backlog"])
         self.socket.listen(backlog)
         logging.debug(f"Socket Listening with {backlog} backlog")
 
         while not END_PROGRAM:
-            connection, addr = self.socket.accept()
-            with connection:
-                logging.debug(f"Connection accepted from {addr}")
-                while not END_PROGRAM:
-                    try:
-                        message = connection.recv(self.bufsize)
-                    except socket.timeout:
-                        pass
-                    if not message:
-                        break
-                    UDP_SEND.put(message)
-                logging.debug(f"Connection closed by client")
+            try:
+                connection, addr = self.socket.accept()
+                with connection:
+                    ad = f"{addr[0]}:{addr[1]}"
+                    logging.debug(f"Connection accepted from {ad}")
+                    while not END_PROGRAM:
+                        try:
+                            message = connection.recv(self.bufsize)
+                        except socket.timeout:
+                            pass
+                        if not message:
+                            break
+                        UDP_SEND.put(message)
+                        logging.debug(f"Put to UDP queue {len(message)}B")
+                    logging.debug(f"Connection closed by client")
+            except socket.timeout:
+                pass
+
         return
 
     def clinet_mode(self):
@@ -206,9 +202,16 @@ class SocketTCP(threading.Thread):
         while not END_PROGRAM:
             if not TCP_SEND.empty():
                 item = TCP_SEND.get()
+                logging.debug(f"Send via TCP {len(item)}B")
                 self.socket.sendall(item)
             else:
-                self.socket.sendall("ping")
+                try:
+                    message = self.socket.recv(self.bufsize)
+                    logging.debug(f"Put to UDP queue {len(message)}B")
+                    UDP_SEND.put(message)
+                except socket.timeout:
+                    pass
+                self.socket.sendall("ping".encode('utf-8'))
                 time.sleep(1)
         return
 
@@ -235,5 +238,4 @@ if __name__ == "__main__":
         print("Unexpected error occured...")
 
     # print(CONFIG)
-
-    END_PROGRAM = True
+    time.sleep(10)

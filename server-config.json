@@ -1,13 +1,14 @@
 {
     "Host IP": "127.0.0.1",
     "Send UDP to IP": "127.0.0.1",
-    "Send UDP to Port": "7001",
-    "UDP Client Port": "7000",
-    "UDP Server Port": "6001",
+    "Send UDP to Port": 7001,
+    "UDP Client Port": 7000,
+    "UDP Server Port": 6001,
     "Send TCP to IP": "194.29.168.3",
-    "Send TCP to Port": "80",
-    "TCP Port": "5001",
+    "Send TCP to Port": 80,
+    "TCP Port": 5001,
     "TCP Is Listen": 0,
-    "TCP Buffer Size": "512",
-    "UDP Buffer Size": "1024"
+    "TCP Buffer Size": 512,
+    "UDP Buffer Size": 1024,
+    "UDP Read Buffer": 60000
 }
